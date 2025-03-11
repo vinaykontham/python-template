@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,8 +7,34 @@ from pydantic import BaseModel
 import hashlib
 from app.auth import router as auth_router
 from app.routes import router as api_router
+from fastapi.responses import RedirectResponse
+from authlib.integrations.starlette_client import OAuth
+import os
 
 app = FastAPI()
+GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
+GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+oauth = OAuth()
+oauth.register(
+    name="github",
+    client_id=GITHUB_CLIENT_ID,
+    client_secret=GITHUB_CLIENT_SECRET,
+    authorize_url="https://github.com/login/oauth/authorize",
+    authorize_params=None,
+    access_token_url="https://github.com/login/oauth/access_token",
+    access_token_params=None,
+    client_kwargs={"scope": "user:email"},
+)
+
+@app.get("/auth/login")
+async def login(request: Request):
+    return await oauth.github.authorize_redirect(request, "http://localhost:8000/auth/callback")
+
+@app.get("/auth/callback")
+async def auth_callback(request: Request):
+    token = await oauth.github.authorize_access_token(request)
+    user = await oauth.github.parse_id_token(request, token)
+    return {"user": user}
 
 # Register routes
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
