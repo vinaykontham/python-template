@@ -6,7 +6,8 @@ client = TestClient(app)
 def test_root():
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "FastAPI Template Ready"}
+    assert "FastAPI URL Shortener" in response.text  # Check for expected text in HTML
+
 
 def test_shorten_url():
     long_url = "https://www.example.com/some/long/url"
