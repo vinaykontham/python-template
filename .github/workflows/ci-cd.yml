@@ -43,6 +43,8 @@ jobs:
       
       - name: Deploy Docker Container
         run: |
-          docker stop fastapi-container || true
-          docker rm fastapi-container || true
-          docker run -d --name fastapi-container -p 8000:8000 vinayko/fastapi-template:latest
+         if [ "$(docker ps -aq -f name=fastapi-container)" ]; then
+           docker stop fastapi-container
+           docker rm fastapi-container
+         fi
+         docker run -d --name fastapi-container -p 8000:8000 my-dockerhub-username/fastapi-template:latest
