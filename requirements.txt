@@ -8,3 +8,4 @@ httpx  # Required for FastAPI TestClient
 python-dotenv  # Environment variable management
 jinja2
 fastapi[all]
+authlib
