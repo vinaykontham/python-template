@@ -1,4 +1,3 @@
-```md
 # FastAPI Project Template
 
 ## Overview
@@ -22,7 +21,7 @@ docker-compose up --build
 
 ### 4. Run Unit Tests
 ```bash
-pytest
+pytest app/tests --verbose
 ```
 
 ## API Endpoints
@@ -38,4 +37,4 @@ pytest
 Modify `routes.py`, `models.py`, and `auth.py` based on your project requirements.
 ```
 
-Now, the template includes **OAuth2 authentication and a CI/CD pipeline setup**! 🚀 Let me know if you need any additional features!
+Now, the template includes **a sample unit test, structured test directory, and an updated CI/CD YAML file to ensure test discovery!** 🚀 Let me know if you need any further refinements!

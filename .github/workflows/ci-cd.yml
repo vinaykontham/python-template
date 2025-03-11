@@ -30,7 +30,11 @@ jobs:
           python -m pip install --no-cache-dir --force-reinstall -r requirements.txt
       
       - name: Run Tests
+<<<<<<< HEAD
         run: python -m pytest
+=======
+        run: python -m pytest app/tests --verbose
+>>>>>>> 56b4f6c (template for my python project)
       
       - name: Build Docker Image
         run: docker build -t fastapi-template .
