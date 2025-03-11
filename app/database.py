@@ -1,35 +1,15 @@
-from sqlalchemy import create_engine, Column, String, DateTime, Integer
-import datetime
+from sqlalchemy import create_engine, Column, String, Integer, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
+import datetime
 import os
 
-# Load database URL from environment variable or default to SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")  # Update this if using PostgreSQL
 
-# Create a database engine
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {})
-
-# Create a base class for models
-Base = declarative_base()
-
-# Create a session factory
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Dependency for getting DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-class URL(Base):
-    __tablename__ = "urls"
+Base = declarative_base()
 
-    id = Column(Integer, primary_key=True, index=True)
-    short_url = Column(String, unique=True, index=True)
-    long_url = Column(String, unique=True, index=True)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-# User Model (Authentication)
 class User(Base):
     __tablename__ = "users"
 
@@ -38,5 +18,12 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     avatar_url = Column(String, nullable=True)
 
-# Create tables in the database
+class URL(Base):
+    __tablename__ = "urls"
+
+    id = Column(Integer, primary_key=True, index=True)
+    short_url = Column(String, unique=True, index=True)
+    long_url = Column(String, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 Base.metadata.create_all(bind=engine)

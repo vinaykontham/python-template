@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine, Column, String
+from sqlalchemy import create_engine, Column, String, Integer, DateTime
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
+import datetime
 
 # Load database URL from environment variable or default to SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
@@ -22,6 +23,13 @@ def get_db():
     finally:
         db.close()
 
+class URL(Base):
+    __tablename__ = "urls"
+
+    id = Column(Integer, primary_key=True, index=True)
+    short_url = Column(String, unique=True, index=True)
+    long_url = Column(String, unique=True, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
 # User Model (Authentication)
 class User(Base):
     __tablename__ = "users"
