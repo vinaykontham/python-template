@@ -40,10 +40,15 @@ jobs:
       
       - name: Push Docker Image
         run: docker push vinayko/fastapi-template:latest
+      - name: Install Docker Compose (For Self-Hosted Runners)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin
       
       - name: Deploy with Docker Compose
         run: |
-          docker-compose -f docker-compose.yml down || true  # Stop existing containers if running
-          docker-compose -f docker-compose.yml pull          # Ensure images are up-to-date
-          docker-compose -f docker-compose.yml up -d        # Start the FastAPI + DB stack
+            docker compose -f docker-compose.yml down || true  # Stop existing containers if running
+            docker compose -f docker-compose.yml pull          # Ensure images are up-to-date
+            docker compose -f docker-compose.yml up -d        # Start the FastAPI + DB stack
+        
       
