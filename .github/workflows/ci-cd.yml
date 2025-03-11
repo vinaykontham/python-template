@@ -37,6 +37,8 @@ jobs:
       #     docker run -d --name test-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_DB=urls -p 5432:5432 postgres:latest
       #     sleep 20
       - name: Run Tests
+        env:
+          PYTHONPATH: $PWD
         run: |
          export PYTHON_ENV="test"
          PYTHONPATH=$PWD python -m pytest --disable-warnings --rootdir=app app/tests --verbose
