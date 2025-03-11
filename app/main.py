@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -5,6 +6,11 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import hashlib
 
+logging.basicConfig(
+    level=logging.DEBUG,  # Set to DEBUG for detailed logs
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 app = FastAPI()
 
 # Serve static files
