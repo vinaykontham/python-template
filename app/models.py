@@ -1,8 +1,9 @@
 from sqlalchemy import Column, String, Integer, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
+from app.database import Base
 
-Base = declarative_base()
+# Base = declarative_base()
 
 class URL(Base):
     __tablename__ = "urls"

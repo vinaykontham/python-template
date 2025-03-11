@@ -16,7 +16,8 @@ def get_db():
 @router.post("/shorten/")
 def shorten_url(long_url: str, db: Session = Depends(get_db)):
     # Generate a short URL (mock implementation)
-    short_url = long_url[:6]
+    short_url = generate_unique_short_url(long_url)
+
     
     new_url = URL(short_url=short_url, long_url=long_url)
     db.add(new_url)
