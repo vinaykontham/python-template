@@ -9,10 +9,9 @@ logger = logging.getLogger(__name__)
 client = TestClient(app)
 
 def test_root():
-    """Test if the home page loads successfully."""
     response = client.get("/")
-    assert response.status_code == 200
-    assert "FastAPI URL Shortener" in response.text  # Check for expected text in HTML
+    assert response.status_code == 200  # Ensure page loads
+    assert "FastAPI URL Shortener" in response.text # Check for expected text in HTML
 
 def test_shorten_url():
     """Test the URL shortening endpoint."""

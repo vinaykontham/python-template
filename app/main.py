@@ -14,6 +14,7 @@ from app.auth import router as auth_router
 from app.routes import router as api_router
 from pydantic import BaseModel
 
+
 # Initialize FastAPI app
 app = FastAPI()
 
