@@ -33,4 +33,16 @@ jobs:
         run: python -m pytest --disable-warnings --rootdir=app app/tests --verbose
         
       - name: Build Docker Image
-        run: docker build -t fastapi-template .
+        run: docker build -t vinayko/fastapi-template:latest .
+      
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      
+      - name: Push Docker Image
+        run: docker push vinayko/fastapi-template:latest
+      
+      - name: Deploy Docker Container
+        run: |
+          docker stop fastapi-container || true
+          docker rm fastapi-container || true
+          docker run -d --name fastapi-container -p 8000:8000 vinayko/fastapi-template:latest
