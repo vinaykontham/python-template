@@ -41,10 +41,9 @@ jobs:
       - name: Push Docker Image
         run: docker push vinayko/fastapi-template:latest
       
-      - name: Deploy Docker Container
+      - name: Deploy with Docker Compose
         run: |
-         if [ "$(docker ps -aq -f name=fastapi-container)" ]; then
-           docker stop fastapi-container
-           docker rm fastapi-container
-         fi
-         docker run -d --name fastapi-container -p 8000:8000 vinayko/fastapi-template:latest
+          docker-compose -f docker-compose.yml down || true  # Stop existing containers if running
+          docker-compose -f docker-compose.yml pull          # Ensure images are up-to-date
+          docker-compose -f docker-compose.yml up -d        # Start the FastAPI + DB stack
+      

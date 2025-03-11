@@ -1,14 +1,19 @@
 version: '3.8'
 services:
   app:
-    build: .
+    image: vinayko/fastapi-template:latest  # Use the pushed Docker Hub image
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - db  # Ensure the DB starts before the app
+    environment:
+      DATABASE_URL: postgresql://user:password@db:5432/urls  # Set DB connection URL
+  
   db:
-    image: postgres
+    image: postgres:latest
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: urls
+    ports:
+      - "5432:5432"
