@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import URL
-
+from app.auth import oauth2_scheme
 router = APIRouter()
 
 # Dependency to get DB session
@@ -31,3 +31,10 @@ def redirect_url(short_url: str, db: Session = Depends(get_db)):
     if not url:
         raise HTTPException(status_code=404, detail="URL not found")
     return {"long_url": url.long_url}
+@router.get("/secure-data")
+async def get_secure_data(token: str = Depends(oauth2_scheme)):
+    """Protected route requiring OAuth authentication."""
+    if not token:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    return {"message": "Secure data access granted!"}

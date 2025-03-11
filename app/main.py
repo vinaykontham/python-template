@@ -5,6 +5,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import hashlib
+from app.auth import router as auth_router
+from app.routes import router as api_router
+
+app = FastAPI()
+
+# Register routes
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(api_router, tags=["API"])
 
 logging.basicConfig(
     level=logging.DEBUG,  # Set to DEBUG for detailed logs
