@@ -12,6 +12,8 @@ from fastapi.responses import RedirectResponse, HTMLResponse
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
 from app.database import SessionLocal, User
+from app.models import User
+
 
 app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")

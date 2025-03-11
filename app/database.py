@@ -5,7 +5,6 @@ from sqlalchemy import Column, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from app.database import Base, User, SessionLocal
 
 # Create a database engine
 engine = create_engine(DATABASE_URL)
