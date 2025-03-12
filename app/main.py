@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from authlib.integrations.starlette_client import OAuth
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
-from app.database import SessionLocal
+from app.database import SessionLocal, Base, engine
 from app.models import User, URL
 from app.auth import router as auth_router
 from app.routes import router as api_router
@@ -18,11 +18,29 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Middleware for session management
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
+SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
+# CORS Middleware (Optional: If UI is hosted separately)
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Database Initialization (Ensures Tables Are Created)
+Base.metadata.create_all(bind=engine)
 
 # OAuth Setup (GitHub Login)
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.getenv("GITHUB_CLIENT_SECRET")
+CALLBACK_URL = os.getenv("CALLBACK_URL", "http://localhost:8000/auth/callback")
+
+if not GITHUB_CLIENT_ID or not GITHUB_CLIENT_SECRET:
+    raise ValueError("GitHub OAuth credentials are missing!")
 
 oauth = OAuth()
 oauth.register(
@@ -58,39 +76,47 @@ async def home(request: Request):
     """ Redirect to login page if user is not authenticated """
     user = request.session.get("user")
     if not user:
-        return RedirectResponse(url="/auth/login")
+        return RedirectResponse(url="/auth/login")  # Redirect to GitHub Login
 
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
-
 
 # 🔹 GitHub Login Route
 @app.get("/auth/login")
 async def login(request: Request):
     """ Redirects user to GitHub login """
-    return await oauth.github.authorize_redirect(request, "http://localhost:8000/auth/callback")
+    return await oauth.github.authorize_redirect(request, CALLBACK_URL)
 
 # 🔹 GitHub OAuth Callback
 @app.get("/auth/callback")
 async def auth_callback(request: Request, db: Session = Depends(get_db)):
-    """ Handles GitHub OAuth callback and stores user data """
-    token = await oauth.github.authorize_access_token(request)
-    user_data = await oauth.github.get("https://api.github.com/user", token=token)
-    user_json = user_data.json()
+    try:
+        token = await oauth.github.authorize_access_token(request)
+        if not token:
+            return RedirectResponse(url="/auth/login?error=oauth_failed")
 
-    # Store user details in DB if not exists
-    existing_user = db.query(User).filter(User.id == str(user_json["id"])).first()
-    if not existing_user:
-        new_user = User(
-            id=str(user_json["id"]),
-            name=user_json["name"],
-            email=user_json.get("email", ""),
-            avatar_url=user_json.get("avatar_url", "")
-        )
-        db.add(new_user)
-        db.commit()
+        user_data = await oauth.github.get("https://api.github.com/user", token=token)
+        user_json = user_data.json()
 
-    request.session["user"] = user_json
-    return RedirectResponse(url="/")
+        if "id" not in user_json:
+            return RedirectResponse(url="/auth/login?error=invalid_user")
+
+        existing_user = db.query(User).filter(User.id == str(user_json["id"])).first()
+        if not existing_user:
+            new_user = User(
+                id=str(user_json["id"]),
+                name=user_json["name"],
+                email=user_json.get("email", ""),
+                avatar_url=user_json.get("avatar_url", "")
+            )
+            db.add(new_user)
+            db.commit()
+
+        request.session["user"] = user_json
+        return RedirectResponse(url="/")
+
+    except Exception as e:
+        logging.error(f"OAuth Callback Error: {str(e)}")
+        return RedirectResponse(url=f"/auth/login?error=unexpected_error&message={str(e)}")
 
 # 🔹 Logout Route
 @app.get("/logout")
@@ -119,12 +145,11 @@ def shorten_url(request: ShortenRequest, db: Session = Depends(get_db)):
 # 🔹 Redirect to Original URL
 @app.get("/{short_url}")
 def redirect_url(short_url: str, db: Session = Depends(get_db)):
-    """ Redirects from short URL to original URL """
     url_entry = db.query(URL).filter(URL.short_url == short_url).first()
     if not url_entry:
-        return {"error": "URL not found"}
+        return HTMLResponse("<h1>404 - URL Not Found</h1>", status_code=404)
     
-    return RedirectResponse(url=url_entry.long_url)
+    return RedirectResponse(url=url_entry.long_url, status_code=302)
 
 # Register routes
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
