@@ -14,7 +14,8 @@ def get_db():
         db.close()
 
 @router.post("/shorten/")
-def shorten_url(long_url: str, db: Session = Depends(get_db)):
+def shorten_url(long_url: str, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+
     # Generate a short URL (mock implementation)
     short_url = generate_unique_short_url(long_url)
 
@@ -26,7 +27,8 @@ def shorten_url(long_url: str, db: Session = Depends(get_db)):
     return new_url
 
 @router.get("/{short_url}")
-def redirect_url(short_url: str, db: Session = Depends(get_db)):
+def redirect_url(short_url: str, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+
     url = db.query(URL).filter(URL.short_url == short_url).first()
     if not url:
         raise HTTPException(status_code=404, detail="URL not found")

@@ -13,7 +13,6 @@ from app.models import User, URL
 from app.auth import router as auth_router
 from app.routes import router as api_router
 from pydantic import BaseModel
-import logging
 
 logger = logging.getLogger(__name__)
 # Initialize FastAPI app
@@ -21,7 +20,7 @@ app = FastAPI()
 
 # Middleware for session management
 SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "random_default_key"))
 
 # CORS Middleware (Optional: If UI is hosted separately)
 from fastapi.middleware.cors import CORSMiddleware
@@ -75,12 +74,15 @@ class ShortenRequest(BaseModel):
 # 🔹 Homepage - Redirects to login if user is not authenticated
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """ Redirect to login page if user is not authenticated """
+    """ Debugging logs for authentication """
+    logger.debug(f"Session contents: {request.session}")  # Log session for debugging
+
     user = request.session.get("user")
-    
     if not user:
-        return HTMLResponse(content="<h1>401 Unauthorized - Please login</h1>", status_code=401)  # Change 404 to 401
-    
+        logger.debug("User is NOT authenticated, redirecting to login.")
+        return HTMLResponse(content="<h1>401 Unauthorized - Please login</h1>", status_code=401)
+
+    logger.debug(f"User authenticated: {user}")
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
 # 🔹 GitHub Login Route
@@ -114,11 +116,15 @@ async def auth_callback(request: Request, db: Session = Depends(get_db)):
             db.add(new_user)
             db.commit()
 
-        request.session["user"] = user_json
+        logger.debug(f"Session before setting user: {request.session}")  # Log session before setting user
+        request.session["user"] = user_json  # Store user info in session
+        logger.debug(f"Session after setting user: {request.session}")  # Log session after setting user
+
         return RedirectResponse(url="/")
 
     except Exception as e:
-        logging.error(f"OAuth Callback Error: {str(e)}")
+        logger.error(f"OAuth Callback Error: {str(e)}")  # Use logger for error reporting
+
         return RedirectResponse(url=f"/auth/login?error=unexpected_error&message={str(e)}")
 
 # 🔹 Logout Route

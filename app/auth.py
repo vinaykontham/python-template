@@ -43,7 +43,8 @@ async def callback(request: Request, code: str):
         )
         
         if token_response.status_code != 200:
-            logger.error(f"OAuth2 token exchange failed: {token_response.text}")
+            logger.error(f"OAuth2 token exchange failed: {token_response.text}")  # Log token exchange failures
+
             raise HTTPException(status_code=400, detail="OAuth authentication failed")
 
         token_data = token_response.json()
@@ -56,10 +57,12 @@ async def callback(request: Request, code: str):
         )
         
         if user_response.status_code != 200:
-            logger.error(f"Failed to fetch user info: {user_response.text}")
+            logger.error(f"Failed to fetch user info: {user_response.text}")  # Log user info retrieval failures
+
             raise HTTPException(status_code=400, detail="User info retrieval failed")
 
         user_info = user_response.json()
         logger.info(f"Authenticated user: {user_info}")
 
-        return {"access_token": access_token, "user": user_info}
+        request.session["user"] = user_info  # Store user info in session
+        return RedirectResponse(url="/")  # Redirect to home after login
