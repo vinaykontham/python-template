@@ -18,7 +18,7 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Middleware for session management
-app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 
 # OAuth Setup (GitHub Login)
 GITHUB_CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
@@ -61,6 +61,7 @@ async def home(request: Request):
         return RedirectResponse(url="/auth/login")
 
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
+
 
 # 🔹 GitHub Login Route
 @app.get("/auth/login")
