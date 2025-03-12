@@ -14,11 +14,10 @@ from app.auth import router as auth_router
 from app.routes import router as api_router
 from pydantic import BaseModel
 
-
 # Initialize FastAPI app
 app = FastAPI()
 
-# Session Middleware for authentication
+# Middleware for session management
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
 
 # OAuth Setup (GitHub Login)
@@ -49,15 +48,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Serve HTML templates (UI)
 templates = Jinja2Templates(directory="app/templates")
 
-# In-memory URL storage (for demonstration)
-url_db = {}
-
-# Pydantic Model for URL shortening requests
+# Model for URL shortening request
 class ShortenRequest(BaseModel):
     long_url: str
-@app.get("/")
-async def read_root():
-    return {"message": "FastAPI URL Shortener"}
+
 # 🔹 Homepage - Redirects to login if user is not authenticated
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -106,19 +100,30 @@ async def logout(request: Request):
 
 # 🔹 Shorten URL Endpoint
 @app.post("/shorten/")
-def shorten_url(request: ShortenRequest):
-    """ Generates a short URL """
+def shorten_url(request: ShortenRequest, db: Session = Depends(get_db)):
+    """ Generates a short URL and stores it in the database """
     short_hash = hashlib.md5(request.long_url.encode()).hexdigest()[:6]
-    url_db[short_hash] = request.long_url
+    
+    # Check if URL already exists
+    existing_url = db.query(URL).filter(URL.short_url == short_hash).first()
+    if existing_url:
+        return {"short_url": existing_url.short_url}
+
+    new_url = URL(short_url=short_hash, long_url=request.long_url)
+    db.add(new_url)
+    db.commit()
+    
     return {"short_url": short_hash}
 
 # 🔹 Redirect to Original URL
 @app.get("/{short_url}")
-def redirect_url(short_url: str):
+def redirect_url(short_url: str, db: Session = Depends(get_db)):
     """ Redirects from short URL to original URL """
-    if short_url not in url_db:
+    url_entry = db.query(URL).filter(URL.short_url == short_url).first()
+    if not url_entry:
         return {"error": "URL not found"}
-    return {"long_url": url_db[short_url]}
+    
+    return RedirectResponse(url=url_entry.long_url)
 
 # Register routes
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
