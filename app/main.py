@@ -55,7 +55,9 @@ url_db = {}
 # Pydantic Model for URL shortening requests
 class ShortenRequest(BaseModel):
     long_url: str
-
+@app.get("/")
+async def read_root():
+    return {"message": "FastAPI URL Shortener"}
 # 🔹 Homepage - Redirects to login if user is not authenticated
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
