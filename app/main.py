@@ -13,7 +13,9 @@ from app.models import User, URL
 from app.auth import router as auth_router
 from app.routes import router as api_router
 from pydantic import BaseModel
+import logging
 
+logger = logging.getLogger(__name__)
 # Initialize FastAPI app
 app = FastAPI()
 
@@ -75,9 +77,10 @@ class ShortenRequest(BaseModel):
 async def home(request: Request):
     """ Redirect to login page if user is not authenticated """
     user = request.session.get("user")
+    
     if not user:
-        return RedirectResponse(url="/auth/login")  # Redirect to GitHub Login
-
+        return HTMLResponse(content="<h1>401 Unauthorized - Please login</h1>", status_code=401)  # Change 404 to 401
+    
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
 # 🔹 GitHub Login Route
